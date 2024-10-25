@@ -45,5 +45,5 @@
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "build", "webpack"]
+  "exclude": ["node_modules", "lib", "webpack"]
 }

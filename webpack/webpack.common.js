@@ -3,7 +3,7 @@ const path = require('path')
 module.exports = {
   context: path.resolve(__dirname, 'src'),
   entry: {
-    bundle: path.resolve(__dirname, '..', './src/index.js'),
+    index: path.resolve(__dirname, '..', './src/index.js'),
   },
   resolve: {
     extensions: ['.js', '.ts', '.json'], //extensions to resolve

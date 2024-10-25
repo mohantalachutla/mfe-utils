@@ -1,8 +1,7 @@
-import * as dotenv from 'dotenv'
-import * as dotenvExpand from 'dotenv-expand'
-dotenvExpand.expand(dotenv.config())
+import * as events from './events'
+import * as validate from './validate'
+import * as load from './load'
 
-// Code here
-const { run } = require('./app')
+const utils = { ...events, ...validate, ...load }
 
-run()
+export default utils

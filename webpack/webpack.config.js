@@ -6,12 +6,9 @@ module.exports = (env, args) => {
 
   console.debug({ environment })
   switch (environment) {
-    case 'development':
-    case 'dev':
-      const dev = require('./webpack.dev.js')
-      return merge(common, dev)
     case 'production':
     case 'prod':
+      // eslint-disable-next-line no-case-declarations
       const prod = require('./webpack.prod.js')
       return merge(common, prod)
     default:
