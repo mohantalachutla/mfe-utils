@@ -1,5 +1,5 @@
 {
-  "name": "mfe-utils",
+  "name": "@mohantalachutla/mfe-utils",
   "version": "1.0.0",
   "description": "Node js starter project with webpack, linting",
   "main": "lib/index.js",
@@ -12,6 +12,9 @@
   "author": "mohantalachutla",
   "license": "ISC",
   "homepage": ".",
+  "files": [
+    "lib/"
+  ],
   "devDependencies": {
     "@babel/core": "^7.18.13",
     "@babel/eslint-parser": "^7.18.9",
@@ -38,9 +41,6 @@
     "./(src|webpack)?/**/*.{js,json}": [
       "prettier --write",
       "git add"
-    ],
-    "./src/**/*.js": [
-      "jest --bail --findRelatedTests --passWithNoTests"
     ]
   },
   "husky": {
