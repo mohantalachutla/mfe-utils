@@ -1,4 +1,3 @@
-import _ from 'lodash'
 /**
  * Validate that the given mfeName is a valid Module Federation name.
  * which tests against the following regex: \[^a-zA-Z0-9_]/g\
@@ -7,9 +6,12 @@ import _ from 'lodash'
  * @throws {Error} If the mfeName is invalid.
  * @returns {void}
  */
-export const validateMfeName = (mfeName) => {
-  if (_.isEmpty(mfeName)) {
+export const validateMfeName = function (mfeName) {
+  if (!mfeName) {
     throw new Error(`InvalidMfeName: mfe name should not be empty`)
+  }
+  if (typeof mfeName !== 'string') {
+    throw new Error(`InvalidMfeName: mfe name should be a string`)
   }
   const reg = new RegExp('[^a-zA-Z0-9_]', 'g')
   if (reg.test(mfeName)) {

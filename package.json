@@ -1,51 +1,22 @@
 {
   "name": "@mohantalachutla/mfe-utils",
   "version": "1.0.0",
-  "description": "Node js starter project with webpack, linting",
+  "description": "Mfe utils library",
   "main": "lib/index.js",
   "scripts": {
-    "build": "webpack --config ./webpack/webpack.config.js --env NODE_ENV=prod",
-    "lint": "eslint --fix 'src/**/*.{js,json}'",
-    "format": "prettier --write './(src|webpack)?/**/*.{js,json}'"
+    "start": "rollup -c -w --environment NODE_ENV:development",
+    "build": "rollup -c --environment NODE_ENV:production"
   },
-  "keywords": [],
-  "author": "mohantalachutla",
-  "license": "ISC",
-  "homepage": ".",
+  "module": "module",
   "files": [
     "lib/"
   ],
+  "author": "Mohan Talachutla",
+  "license": "ISC",
   "devDependencies": {
-    "@babel/core": "^7.18.13",
-    "@babel/eslint-parser": "^7.18.9",
-    "@babel/preset-env": "^7.18.10",
-    "babel-loader": "^8.2.5",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "husky": "^4.3.8",
-    "lint-staged": "^13.0.3",
-    "prettier": "^2.7.1",
-    "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0",
-    "webpack-merge": "^5.8.0"
-  },
-  "dependencies": {
-    "lodash": "^4.17.21"
-  },
-  "lint-staged": {
-    "./*/**/*.{js, json}": [
-      "eslint --fix"
-    ],
-    "./(src|webpack)?/**/*.{js,json}": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.24.0"
   }
 }

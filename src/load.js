@@ -44,9 +44,9 @@ export const loadMfe = async (url, mfe, moduleName) => {
     // const init = await __webpack_init_sharing__("default");
     console.debug({
       // init,
-      __webpack_init_sharing__,
-      __webpack_share_scopes__,
-      __webpack_require__,
+      wis: __webpack_init_sharing__,
+      wss: __webpack_share_scopes__,
+      wr: __webpack_require__,
     })
     const container = window[mfe]
 
