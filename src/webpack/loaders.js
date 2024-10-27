@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-import { isEmpty } from './utils'
-import { isValidMfeName } from './validators'
+import { isEmpty } from '../utils'
+import { isValidMfeName } from '../validators'
 /**
  * @function loadMfe
  * Loads a module federation component.
