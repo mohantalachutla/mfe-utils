@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
-import { validateMfeName } from './validate'
+import { isEmpty } from './utils'
+import { isValidMfeName } from './validators'
 /**
  * @function loadMfe
  * Loads a module federation component.
@@ -9,13 +10,13 @@ import { validateMfeName } from './validate'
  * @returns {Promise<Module>} A promise that resolves when the component is loaded.
  */
 export const loadMfe = async (url, mfe, moduleName) => {
-  if (!url) {
+  if (isEmpty(url)) {
     throw new Error(`InvalidUrl: mfe remote url should not be empty`)
   }
-  if (!module) {
+  if (isEmpty) {
     throw new Error(`InvalidMfeName: mfe name should not be empty`)
   }
-  validateMfeName(mfe)
+  isValidMfeName(mfe)
 
   if (!window) {
     throw new Error(`InvalidWindow: browser window should not be empty`)

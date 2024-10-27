@@ -1,6 +1,7 @@
 import * as events from './events'
-import * as load from './load'
-import * as validate from './validate'
-const utils = { ...events, ...validate, ...load }
+import * as loader from './loader'
+import * as validators from './validators'
+import * as plugins from './webpack/plugins'
+const utils = { ...events, ...validators, ...plugins, ...loader }
 
 export default utils
