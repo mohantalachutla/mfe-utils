@@ -114,3 +114,16 @@ export const validateAndGetSharedDeps = (sharedDeps) => {
   })
   return sharedDeps
 }
+
+export const validateAndGetModule = (module) => {
+  if (isEmpty(module)) {
+    throw new Error('No module provided')
+  }
+  if (!isString(module)) {
+    throw new Error(`Invalid module: ${module}`)
+  }
+  if (!module.startsWith('./') && !module.startsWith('../')) {
+    module = `./${module}`
+  }
+  return module
+}

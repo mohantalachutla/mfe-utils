@@ -1,22 +1,22 @@
 /* eslint-disable no-undef */
 import { isEmpty } from '../utils'
-import { isValidMfeName } from '../validators'
+import { isValidMfeName, validateAndGetModule } from '../validators'
 /**
  * @function loadMfe
  * Loads a module federation component.
  * @param {string} url The remote url of the module federation.
- * @param {string} mfe The name of the module federation.
- * @param {string} moduleName The name of the module to import.
+ * @param {string} name The name of the module federation.
+ * @param {string} module The name or relative path of the module to import.
  * @returns {Promise<Module>} A promise that resolves when the component is loaded.
  */
-export const loadMfe = async (url, mfe, moduleName) => {
+export const loadMfe = async (url, name, module) => {
   if (isEmpty(url)) {
     throw new Error(`InvalidUrl: mfe remote url should not be empty`)
   }
-  if (isEmpty) {
+  if (isEmpty(name)) {
     throw new Error(`InvalidMfeName: mfe name should not be empty`)
   }
-  isValidMfeName(mfe)
+  isValidMfeName(name)
 
   if (!window) {
     throw new Error(`InvalidWindow: browser window should not be empty`)
@@ -49,19 +49,19 @@ export const loadMfe = async (url, mfe, moduleName) => {
       wss: __webpack_share_scopes__,
       wr: __webpack_require__,
     })
-    const container = window[mfe]
+    const container = window[name]
 
     if (!container) {
-      throw new Error(`Failed to load mfe ${url}::${mfe}`)
+      throw new Error(`Failed to load mfe ${url}::${name}`)
     }
     // Initialize the container, it may provide shared modules
     // eslint-disable-next-line no-undef
     await container.init(__webpack_share_scopes__.default)
-    const factory = await window[mfe].get(moduleName)
+    const factory = await window[name].get(validateAndGetModule(module))
     const Module = factory()
     console.debug({ Module })
     if (!Module) {
-      throw new Error(`Failed to load module ${moduleName}`)
+      throw new Error(`Failed to load module ${module}`)
     }
     return Module
   } catch (error) {
