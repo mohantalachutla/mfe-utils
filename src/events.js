@@ -25,14 +25,19 @@ export class EventManager {
     return emitter.eventNames()
   }
 
-  dispatch(event, data) {
+  dispatch(event, data, awaiting) {
     console.debug('EventManager:Dispatch', event, data)
     if (isEmpty(event)) {
       throw new Error(`InvalidEvent: event should not be empty`)
     }
-
-    if (isEmpty(data)) {
-      throw new Error(`InvalidData: data should not be empty`)
+    if (awaiting?.event) {
+      const clearTimeout = setTimeout(() => {
+        throw new Error(`EventManager: Awaiting Timeout: ${awaiting.event}`)
+      }, awaiting.timeout ?? 5000)
+      emitter.on(awaiting.event, () => {
+        console.info('EventManager: Awaiting Fullfilled', awaiting.event)
+        clearTimeout()
+      })
     }
     emitter.emit(event, data)
   }
