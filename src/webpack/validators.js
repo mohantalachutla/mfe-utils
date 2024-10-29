@@ -1,4 +1,4 @@
-import { isEmpty, isObject, isString } from './utils'
+import { isEmpty, isObject, isString } from '../utils'
 
 /**
  * Validate that the given mfeName is a valid Module Federation name.
@@ -8,7 +8,7 @@ import { isEmpty, isObject, isString } from './utils'
  * @throws {Error} If the mfeName is invalid.
  * @returns {void}
  */
-export const isValidMfeName = function (mfeName) {
+export const validateMfeName = function (mfeName) {
   if (isEmpty(mfeName)) {
     throw new Error(`InvalidMfeName: mfe name should not be empty`)
   }
@@ -23,51 +23,64 @@ export const isValidMfeName = function (mfeName) {
   }
   return true
 }
+export const isValidMfeName = function (mfeName) {
+  try {
+    validateMfeName(mfeName)
+  } catch (error) {
+    return false
+  }
+  return true
+}
 
 /**
  * Validates the provided remotes configuration and returns it if valid.
  * Throws an error if the remotes are invalid or empty.
  *
+ * If the remotes is a string, it checks if the string is valid as a remote URL and returns it as an object with the MFE name as the key.
  * If the remotes is an object, it checks each key is a valid MFE name
  * and each value is a valid remote URL.
  *
  * If the remotes is an array, it checks each remote URL is valid and
  * splits it into an object with the MFE name as the key.
  *
- * @param {Object|Array} remotes - The remotes configuration to validate.
+ * @param {Object|Array|string} remotes - The remotes configuration to validate.
  * @throws {Error} If no remotes are provided or if any remote name or URL is invalid.
  * @returns {Object} The validated remotes configuration.
  */
 export const validateAndGetRemotes = (remotes) => {
+  const getRemoteFromUrl = (url) => {
+    if (!isValidRemoteUrl(url)) {
+      throw new Error(`Invalid remote url: ${url}`)
+    }
+    const parts = url.split('@')
+    return {
+      [parts[0]]: url,
+    }
+  }
   if (isEmpty(remotes)) {
     throw new Error('No remotes provided')
   }
-  if (isObject(remotes)) {
-    Object.keys(remotes).forEach((key) => {
+  if (isString(remotes)) {
+    return getRemoteFromUrl(remotes)
+  } else if (isObject(remotes)) {
+    Object.entries(remotes).forEach(([key, value]) => {
       if (!isValidMfeName(key)) {
         throw new Error(`Invalid remote name: ${key}`)
       }
-    })
-    Object.values(remotes).forEach((value) => {
       if (!isValidRemoteUrl(value)) {
         throw new Error(`Invalid remote url: ${value}`)
       }
     })
   } else if (isArray(remotes)) {
-    ;(remotes = []).map((remote) => {
-      if (!isValidRemoteUrl(remote)) {
-        throw new Error(`Invalid remote url: ${remote}`)
-      }
-      const parts = remote.split('@')
-      return {
-        [parts[0]]: remote,
-      }
+    return (remotes = []).map((remote) => {
+      return getRemoteFromUrl(remote)
     })
   } else {
     throw new Error(`Invalid remotes: ${remotes}`)
   }
   return remotes
 }
+
 /**
  * @function isValidRemoteUrl
  * Checks if a url is valid for module federation.
@@ -115,15 +128,15 @@ export const validateAndGetSharedDeps = (sharedDeps) => {
   return sharedDeps
 }
 
-export const validateAndGetModule = (module) => {
-  if (isEmpty(module)) {
-    throw new Error('No module provided')
+export const validateAndGetFile = (fileName) => {
+  if (isEmpty(fileName)) {
+    throw new Error('File or Directory name should not be empty')
   }
-  if (!isString(module)) {
-    throw new Error(`Invalid module: ${module}`)
+  if (!isString(fileName)) {
+    throw new Error(`File or Directory name must be a string. Got ${fileName}`)
   }
-  if (!module.startsWith('./') && !module.startsWith('../')) {
-    module = `./${module}`
+  if (!fileName.startsWith('./') && !fileName.startsWith('../')) {
+    fileName = `./${fileName}`
   }
-  return module
+  return fileName
 }

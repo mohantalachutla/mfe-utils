@@ -1,8 +1,9 @@
-import {
-  isValidMfeName as _isValidMfeName,
-  validateAndGetRemotes,
-  validateAndGetSharedDeps,
-} from '../validators'
+import { validateAndGetRemotes, validateAndGetSharedDeps } from './validators'
+
+const __REMOTE_FILENAME__ = 'remoteEntry.js'
+const __DEFAULT_EXPOSES__ = {
+  './App': './src/App',
+}
 
 /**
  * Returns a configured Webpack ModuleFederationPlugin instance.
@@ -31,9 +32,9 @@ export const configureMFRemotePlugin =
  *
  * @param {function} Pluginn - The ModuleFederationPlugin constructor.
  * @param {string} name - The name of the module federation.
- * @param {string} [filename='remoteEntry.js'] - The filename of the remote entry.
  * @param {Record<string, string>} [exposes={}] - A map of exposed module names to paths.
  * @param {Record<string, string>} [sharedDeps={}] - A map of shared dependency names to versions.
+ * @param {string} [filename] - The filename of the remote entry.
  *
  * The plugin will be configured with the given name, filename, exposes, and shared dependencies.
  * <br>
@@ -44,14 +45,14 @@ export const configureMFRemotePlugin =
  */
 export const configureMFPlugin =
   (Pluginn) =>
-  (name, filename = 'remoteEntry.js', exposes = {}, sharedDeps) => {
+  (name, exposes = {}, sharedDeps, filename) => {
     if (!Pluginn) throw new Error('Pluginn is required')
     return new Pluginn({
       name,
-      filename: filename,
+      filename: filename ?? __REMOTE_FILENAME__,
       library: { type: 'var', name },
       exposes: {
-        './App': './src/App',
+        ...__DEFAULT_EXPOSES__,
         ...exposes,
       },
       shared: validateAndGetSharedDeps(sharedDeps),
@@ -81,24 +82,25 @@ export const configureMFRemoteReactPlugin =
   }
 
 /**
- * Returns a Webpack ModuleFederationPlugin instance configured for React.
+ * Returns a configured Webpack ModuleFederationPlugin instance for React.
  *
  * @param {function} Pluginn - The ModuleFederationPlugin constructor.
  * @param {string} name - The name of the module federation.
- * @param {string} filename - The filename of the remote entry.
- * @param {Record<string, string>} exposes - A map of exposed module names to paths.
- * @param {Record<string, string>} sharedDeps - A map of shared dependency names to versions.
+ * @param {Record<string, string>} [exposes={}] - A map of exposed module names to paths.
+ * @param {Record<string, string>} [sharedDeps={}] - A map of shared dependency names to versions.
  *
- * This function uses the configureMFRemotePlugin to set up the module federation with
- * the specified name, filename, exposes, and shared dependencies. It ensures that
- * 'react' and 'react-dom' are shared with singleton=true, using the specified version
- * or defaulting to 'latest' if not specified.
+ * The plugin will be configured with the given name, exposes, and shared dependencies.
+ * <br>
+ * The default filename is 'remoteEntry.js'.
+ * And It exposes './App' from './src/App' by default.
+ * And it sets the react and react-dom dependencies as shared with singleton=true, using the version specified in
+ * the package.json or defaulting to 'latest' if not specified.
  *
- * @returns {ModuleFederationPlugin} A Webpack ModuleFederationPlugin instance configured for React.
+ * @returns {ModuleFederationPlugin} A configured Webpack ModuleFederationPlugin instance for React.
  */
 export const configureMFReactPlugin =
-  (Pluginn) => (name, filename, exposes, sharedDeps) => {
-    return configureMFPlugin(Pluginn)(name, filename, exposes, {
+  (Pluginn) => (name, exposes, sharedDeps) => {
+    return configureMFPlugin(Pluginn)(name, exposes, {
       ...sharedDeps,
       ...getReactSharedDeps(sharedDeps),
     })
@@ -129,21 +131,23 @@ export const configureMFRemoteSveltePlugin =
 /**
  * Returns a Webpack ModuleFederationPlugin instance with Svelte-specific shared dependencies.
  *
+ * @param {function} Pluginn - The ModuleFederationPlugin constructor.
  * @param {string} name - The name of the module federation.
- * @param {string} filename - The filename of the remote entry.
- * @param {Record<string, string>} exposes - A map of exposed module names to paths.
- * @param {Record<string, string>} sharedDeps - A map of shared dependency names to versions.
+ * @param {Record<string, string>} [exposes={}] - A map of exposed module names to paths.
+ * @param {Record<string, string>} [sharedDeps={}] - A map of shared dependency names to versions.
  *
- * This function uses the configureMFPlugin to set up the module federation with
- * the specified name, filename, exposes, and shared dependencies. It ensures that
- * 'svelte' is shared with singleton=true, using the specified version or defaulting
- * to 'latest' if not specified.
+ * The plugin will be configured with the given name, exposes, and shared dependencies.
+ * <br>
+ * The default filename is 'remoteEntry.js'.
+ * And It exposes './App' from './src/App' by default.
+ * And it sets the svelte dependency as shared with singleton=true, using the version specified in
+ * the package.json or defaulting to 'latest' if not specified.
  *
- * @returns {ModuleFederationPlugin} A Webpack ModuleFederationPlugin instance configured for Svelte.
+ * @returns {ModuleFederationPlugin} A configured Webpack ModuleFederationPlugin instance for Svelte.
  */
 export const configureMFSveltePlugin =
-  (Pluginn) => (name, filename, exposes, sharedDeps) => {
-    return configureMFPlugin(Pluginn)(name, filename, exposes, {
+  (Pluginn) => (name, exposes, sharedDeps) => {
+    return configureMFPlugin(Pluginn)(name, exposes, {
       ...sharedDeps,
       ...getSvelteSharedDeps(sharedDeps),
     })
@@ -165,4 +169,3 @@ const getReactSharedDeps = (sharedDeps) => ({
     requiredVersion: sharedDeps['react-dom'] ?? 'latest',
   },
 })
-export const isValidMfeName = _isValidMfeName
