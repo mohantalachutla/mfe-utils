@@ -58,7 +58,9 @@ export const loadMfe = async (url, name, module) => {
     // Initialize the container, it may provide shared modules
     // eslint-disable-next-line no-undef
     await container.init(__webpack_share_scopes__.default)
-    const factory = await window[name].get(validateAndGetFile(module))
+    const factory = await window[name].get(
+      validateAndGetFile(module || './App')
+    )
     const Module = factory()
     console.debug({ Module })
     if (!Module) {

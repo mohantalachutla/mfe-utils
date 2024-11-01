@@ -31,12 +31,12 @@ export class EventManager {
       throw new Error(`InvalidEvent: event should not be empty`)
     }
     if (awaiting?.event) {
-      const clearTimeout = setTimeout(() => {
+      const timeout = setTimeout(() => {
         throw new Error(`EventManager: Awaiting Timeout: ${awaiting.event}`)
       }, awaiting.timeout ?? 5000)
       emitter.on(awaiting.event, () => {
         console.info('EventManager: Awaiting Fullfilled', awaiting.event)
-        clearTimeout()
+        clearTimeout(timeout)
       })
     }
     emitter.emit(event, data)
