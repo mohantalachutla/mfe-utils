@@ -3,21 +3,33 @@ import { isEmpty } from '../utils'
 import { validateMfeName, validateAndGetFile } from './validators'
 import Cache from '../cache'
 
-/**
- * Loads a MicroFrontend (MFE) module by URL and name, optionally caching the result.
- *
- * @param {string} url - The URL of the remote module federation entry.
- * @param {string} name - The name of the module federation to load.
- * @param {string} moduleName - The specific module within the federation to load. The name or relative path of the module to import.
- *
- * This function first validates the inputs and ensures the necessary window and document objects are present.
- * It checks if the specified MFE is already cached, and if so, returns the cached module.
- * Otherwise, it loads the remote container and caches it before returning the specified module.
- *
- * @throws {Error} If any of the input parameters are invalid or if the loading process fails.
- * @returns {Promise<Module>} A promise that resolves to the loaded module.
- */
-export const loadMfe = async (url, name, moduleName) => {
+const getDefaultModule = (Component = () => {}) => ({
+  __esModule: false,
+  default: Component,
+})
+
+const cache = new Cache()
+
+export const loadMfe = async ({
+  url,
+  name,
+  moduleName = './App',
+  defaultComponent = () => {},
+  enableCache = true,
+}) => {
+  validateRequiredInputs(url, name)
+  try {
+    return await loadModule({ url, name, moduleName, enableCache })
+  } catch (error) {
+    console.error(error)
+    return getDefaultModule(defaultComponent)
+  }
+}
+
+const getCacheKey = (name, moduleName) =>
+  name + '-' + moduleName?.replace('/', '').replace('.', '')
+
+const validateRequiredInputs = (url, name) => {
   if (isEmpty(url)) {
     throw new Error(`InvalidUrl: mfe remote url should not be empty`)
   }
@@ -32,71 +44,43 @@ export const loadMfe = async (url, name, moduleName) => {
   if (!window.document) {
     throw new Error(`InvalidDocument: window.document should not be empty`)
   }
+  if (!__webpack_init_sharing__) {
+    throw new Error(
+      `InvalidInitSharing: __webpack_init_sharing__ should not be empty`
+    )
+  }
   // eslint-disable-next-line no-undef
   if (!__webpack_share_scopes__?.default) {
     throw new Error(
       `InvalidShareScopes: __webpack_share_scopes__ should not be empty`
     )
   }
-  const __FULL_REMOTE__ = `${name}@${url}/remoteEntry.js`
-  const cache = new Cache()
-  try {
-    if (cache.has(__FULL_REMOTE__)) {
-      return loadModule(cache.get(__FULL_REMOTE__))(moduleName) // Return from cache
-    }
-    const container = await loadContainer(url, name) // Load the container
-    cache.set(__FULL_REMOTE__, container) // Add to cache
-    return loadModule(container)(moduleName)
-  } catch (error) {
-    console.error(error)
-  }
 }
 
 /**
- * Loads a remote module federation container by injecting a script tag into the document.
- *
- * @param {string} url - The base URL of the remote module federation.
- * @param {string} name - The name of the module federation container to load.
- *
- * The function dynamically creates a script tag to load the remote module federation entry
- * and attaches it to the document body. Once the script is loaded, it initializes the container
- * with the shared scopes and returns the container. The function also logs the loading process
- * and throws an error if the container fails to load.
- *
- * @returns {Promise<object>} A promise that resolves to the loaded module federation container.
- * @throws {Error} If the container fails to load or initialize.
+ * Loads a script from the given url. The url is appended with the
+ * filename if provided.
+ * @param {string} url The url to load the script from.
+ * @param {string} [filename='remoteEntry.js'] The filename to append to the url.
+ * @returns {Promise<void>} A promise that resolves when the script is loaded.
+ * @throws {Error} If the script fails to load.
  */
-export const loadContainer = async (url, name) => {
+export const loadScript = async (url, filename = 'remoteEntry.js') => {
+  const fullUrl = `${url}/${filename}`
   try {
-    //Container creation
     //Loading the remote url
     await new Promise((resolve, reject) => {
       const script = document.createElement('script')
-      script.src = `${url}/remoteEntry.js`
+      script.src = fullUrl
       // script.async = true;
       script.onload = resolve
       script.onerror = reject
       document.body.appendChild(script)
     })
-    // const init = await __webpack_init_sharing__("default");
-    // console.debug({
-    //   // init,
-    //   wis: __webpack_init_sharing__,
-    //   wss: __webpack_share_scopes__,
-    //   wr: __webpack_require__,
-    // })
-    console.info(`Loaded script at ${name}@${url}/remoteEntry.js`)
-    const container = window[name]
-    if (!container) {
-      throw new Error(`Failed to load container ${url}::${name}`)
-    }
-    // Initialize the container, it may provide shared modules
-    // eslint-disable-next-line no-undef
-    await container.init(__webpack_share_scopes__.default)
-    return container
+    console.info(`loadScript: ${fullUrl}`)
   } catch (error) {
-    console.error('Error loading container')
-    console.error(error)
+    console.error(`error loading script: ${fullUrl}`)
+    throw error
   }
 }
 
@@ -107,16 +91,56 @@ export const loadContainer = async (url, name) => {
  * @param {string} [module='./App'] The name or relative path of the module to import.
  * @returns {Promise<Module>} A promise that resolves when the component is loaded.
  */
-export const loadModule = (container) => async (module) => {
-  try {
-    const factory = await container.get(validateAndGetFile(module || './App'))
-    const Module = factory()
-    if (!Module) {
-      throw new Error(`Failed to load module ${module}`)
+const loadModule = async ({ url, name, moduleName, enableCache = true }) => {
+  const __CACHE_KEY__ = getCacheKey(name, moduleName)
+  let Module
+  // fetching from cache
+  if (enableCache && cache) Module = await cache.get(__CACHE_KEY__)
+  console.log({ Module })
+  if (!Module) {
+    console.info(
+      `loading module ${moduleName} from ${url} ${
+        enableCache ? 'and caching with key ' + __CACHE_KEY__ : ''
+      }`
+    )
+    await loadScript(url)
+    let moduleFactory
+    // loading the container and module factory
+    try {
+      //Container creation
+      // const init = await __webpack_init_sharing__('default') // Not working with it
+      if (!window[name]) {
+        throw new Error(`Failed to load container ${name}`)
+      }
+      // Initialize the container, it may provide shared modules
+      // eslint-disable-next-line no-undef
+      await window[name].init(__webpack_share_scopes__.default)
+      moduleFactory = await window[name].get(
+        validateAndGetFile(moduleName || './App')
+      )
+    } catch (error) {
+      console.error('error loading container')
+      console.error(error)
+      throw error
     }
-    return Module
-  } catch (error) {
-    console.error('Error loading module')
-    console.error(error)
+
+    // loading the module from module factory
+    try {
+      if (!moduleFactory) {
+        throw new Error(`Failed to load module factory`)
+      }
+      Module = moduleFactory && moduleFactory()
+      if (!Module) {
+        throw new Error(`Failed to load module ${moduleName}`)
+      }
+
+      if (enableCache && cache) cache.set(__CACHE_KEY__, Module) // Add to cache
+
+      return Module
+    } catch (error) {
+      console.error('Error loading module')
+      throw error
+    }
   }
+  return new Promise((resolve) => resolve(Module))
 }

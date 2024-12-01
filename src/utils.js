@@ -24,6 +24,22 @@ export const isObject = (value) => {
   return typeof value === 'object'
 }
 
-const isArray = (value) => {
+export const isArray = (value) => {
   return Array.isArray(value)
+}
+
+export const setGlobal = (key, value) => {
+  if (global) {
+    global[key] = value
+  } else if (window) {
+    window[key] = value
+  }
+}
+
+export const getGlobal = (key) => {
+  if (global) {
+    return global[key]
+  } else if (window) {
+    return window[key]
+  }
 }

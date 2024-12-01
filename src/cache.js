@@ -1,6 +1,36 @@
+import { getGlobal, setGlobal } from './utils'
+
+const __CACHE_NAME_SPACE__ = '__CACHE__'
+const __GLOBAL_CACHE_NAME_SPACE__ = '__GLOBAL_MFE_CACHE__'
+
 class Cache {
-  constructor() {
-    this.__CACHE__ = {}
+  /**
+   * Constructs a Cache instance.
+   *
+   * If no context is provided, initializes an empty cache or uses the global
+   * window cache if available. If a context is provided, it must be an instance
+   * of Cache, and the cache is initialized with the provided context's cache.
+   *
+   * Binds class methods to ensure proper context when invoked.
+   *
+   * @param {Cache} [context] - An optional Cache instance to initialize the cache.
+   * @throws {Error} If the provided context is not an instance of Cache.
+   */
+  constructor(context) {
+    if (context && !context instanceof Cache)
+      throw new Error(`InvalidCache: cache should be of type of Cache`)
+    if (context) this.__CACHE__ = context.__CACHE__
+    this.__CACHE__ = getGlobal(__GLOBAL_CACHE_NAME_SPACE__) || {}
+    this.get = this.get.bind(this)
+    this.set = this.set.bind(this)
+    this.delete = this.delete.bind(this)
+    this.clear = this.clear.bind(this)
+    this.keys = this.keys.bind(this)
+    this.values = this.values.bind(this)
+    this.getCache = this.getCache.bind(this)
+    this.isEmpty = this.isEmpty.bind(this)
+    this.toString = this.toString.bind(this)
+    this.sync = this.sync.bind(this)
   }
   /**
    * Get the value associated with the given key.
@@ -8,14 +38,10 @@ class Cache {
    * @returns {any}
    */
   get(key) {
-    return this.__CACHE__[key]
+    return new Promise((resolve) => {
+      resolve(this.__CACHE__[key])
+    })
   }
-  /**
-   * Synchronizes the in-memory cache with the local storage.
-   * This method saves the current state of the cache to the local storage
-   * under the specified cache key, allowing for persistence across sessions.
-   */
-  sync() {}
   /**
    * Sets the value associated with the given key in the cache.
    * Throws an error if the key is empty.
@@ -30,8 +56,16 @@ class Cache {
     if (!value) {
       throw new Error('Cache: value should not be empty')
     }
+    console.info('Cache::set', key, value)
     this.__CACHE__[key] = value
     this.sync()
+  }
+  /**
+   * Syncs the cache to the window's __MFE_CACHE__ property.
+   * This is useful for debugging purposes as it allows you to inspect the cache in the browser's console.
+   */
+  sync() {
+    setGlobal(__GLOBAL_CACHE_NAME_SPACE__, this.__CACHE__)
   }
   /**
    * Removes the value associated with the given key from the cache.
@@ -53,14 +87,6 @@ class Cache {
     this.sync()
   }
   /**
-   * Check if the given key exists in the cache.
-   * @param {string} key
-   * @returns {boolean}
-   */
-  has(key) {
-    return key in this.__CACHE__
-  }
-  /**
    * Get an array of keys in the cache.
    * @returns {Array<string>}
    */
@@ -75,11 +101,14 @@ class Cache {
     return Object.values(this.__CACHE__)
   }
   /**
-   * Returns the entire cache object.
-   * @returns {Object<string, any>}
+   * Get the underlying cache object.
+   * @returns {Object<string, any>} The underlying cache object.
+   * @private
    */
   getCache() {
-    return this.__CACHE__
+    return new Promise((resolve) => {
+      resolve(this.__CACHE__)
+    })
   }
   /**
    * Check if the cache is empty.
@@ -87,6 +116,10 @@ class Cache {
    */
   isEmpty() {
     return Object.keys(this.__CACHE__).length === 0
+  }
+
+  toString() {
+    return JSON.stringify(this.__CACHE__)
   }
 }
 
