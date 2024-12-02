@@ -38,9 +38,7 @@ class Cache {
    * @returns {any}
    */
   get(key) {
-    return new Promise((resolve) => {
-      resolve(this.__CACHE__[key])
-    })
+    return this.__CACHE__[key]
   }
   /**
    * Sets the value associated with the given key in the cache.
@@ -106,9 +104,7 @@ class Cache {
    * @private
    */
   getCache() {
-    return new Promise((resolve) => {
-      resolve(this.__CACHE__)
-    })
+    return this.__CACHE__
   }
   /**
    * Check if the cache is empty.
