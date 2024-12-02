@@ -4,7 +4,7 @@ import { validateMfeName, validateAndGetFile } from './validators'
 import Cache from '../cache'
 
 const getDefaultModule = (Component = () => {}) => ({
-  __esModule: false,
+  __esModule: true,
   default: Component,
 })
 
@@ -18,7 +18,9 @@ export const loadMfe = async ({
   enableCache = true,
 }) => {
   validateRequiredInputs(url, name)
+  console.info(`loading module ${moduleName} of mfe ${name} from ${url}`)
   try {
+    console.info(`current cache ${cache.toString()}`)
     return await loadModule({ url, name, moduleName, enableCache })
   } catch (error) {
     console.error(error)
@@ -77,7 +79,7 @@ export const loadScript = async (url, filename = 'remoteEntry.js') => {
       script.onerror = reject
       document.body.appendChild(script)
     })
-    console.info(`loadScript: ${fullUrl}`)
+    console.info(`loadScript: script loaded from ${fullUrl}`)
   } catch (error) {
     console.error(`error loading script: ${fullUrl}`)
     throw error
@@ -95,52 +97,53 @@ const loadModule = async ({ url, name, moduleName, enableCache = true }) => {
   const __CACHE_KEY__ = getCacheKey(name, moduleName)
   let Module
   // fetching from cache
-  if (enableCache && cache) Module = await cache.get(__CACHE_KEY__)
-  console.log({ Module })
-  if (!Module) {
-    console.info(
-      `loading module ${moduleName} from ${url} ${
-        enableCache ? 'and caching with key ' + __CACHE_KEY__ : ''
-      }`
-    )
-    await loadScript(url)
-    let moduleFactory
-    // loading the container and module factory
-    try {
-      //Container creation
-      // const init = await __webpack_init_sharing__('default') // Not working with it
-      if (!window[name]) {
-        throw new Error(`Failed to load container ${name}`)
-      }
-      // Initialize the container, it may provide shared modules
-      // eslint-disable-next-line no-undef
-      await window[name].init(__webpack_share_scopes__.default)
-      moduleFactory = await window[name].get(
-        validateAndGetFile(moduleName || './App')
-      )
-    } catch (error) {
-      console.error('error loading container')
-      console.error(error)
-      throw error
-    }
-
-    // loading the module from module factory
-    try {
-      if (!moduleFactory) {
-        throw new Error(`Failed to load module factory`)
-      }
-      Module = moduleFactory && moduleFactory()
-      if (!Module) {
-        throw new Error(`Failed to load module ${moduleName}`)
-      }
-
-      if (enableCache && cache) cache.set(__CACHE_KEY__, Module) // Add to cache
-
-      return Module
-    } catch (error) {
-      console.error('Error loading module')
-      throw error
-    }
+  if (enableCache && cache) Module = cache.get(__CACHE_KEY__)
+  if (Module) {
+    return Module
   }
-  return new Promise((resolve) => resolve(Module))
+  console.info(
+    `loading module ${moduleName} from ${url} ${
+      enableCache ? 'and caching with key ' + __CACHE_KEY__ : ''
+    }`
+  )
+  await loadScript(url)
+  let moduleFactory
+  // loading the container and module factory
+  try {
+    //Container creation
+    // const init = await __webpack_init_sharing__('default') // Not working with it
+    if (!window[name]) {
+      console.error(`Failed to load container ${name}`)
+      throw new Error(`Failed to load container ${name}`)
+    }
+    // Initialize the container, it may provide shared modules
+    // eslint-disable-next-line no-undef
+    await window[name].init(__webpack_share_scopes__.default)
+    moduleFactory = await window[name].get(
+      validateAndGetFile(moduleName || './App')
+    )
+    if (!moduleFactory) {
+      console.error(`Failed to load module factory`)
+      throw new Error(`Failed to load module factory`)
+    }
+  } catch (error) {
+    console.error('error loading container')
+    throw error
+  }
+
+  // loading the module from module factory
+  try {
+    Module = moduleFactory && moduleFactory()
+    if (!Module) {
+      console.error(`Failed to load module ${moduleName}`)
+      throw new Error(`Failed to load module ${moduleName}`)
+    }
+
+    if (enableCache && cache) cache.set(__CACHE_KEY__, Module) // Add to cache
+
+    return Module
+  } catch (error) {
+    console.error('Error loading module')
+    throw error
+  }
 }
