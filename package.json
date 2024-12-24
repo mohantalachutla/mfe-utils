@@ -4,11 +4,11 @@
   "description": "Mfe utils library",
   "main": "lib/index.js",
   "scripts": {
-    "start": "rollup -c -w --environment NODE_ENV:development",
+    "build:dev": "rollup -c -w --environment NODE_ENV:development",
     "build": "rollup -c --environment NODE_ENV:production",
     "clean": "rimraf lib",
-    "republish": "npm run clean && npm run justPublish",
-    "justPublish": "npm run build && npm publish --access public"
+    "publish:again": "npm run clean && npm run justPublish",
+    "publish:just": "npm run build && npm publish --access public"
   },
   "module": "module",
   "files": [
