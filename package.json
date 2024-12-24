@@ -6,8 +6,8 @@
   "scripts": {
     "start": "rollup -c -w --environment NODE_ENV:development",
     "build": "rollup -c --environment NODE_ENV:production",
-    "clean": "rm -rf lib && npm unpublish -f @mohantalachutla/mfe-utils",
-    "republish": "npm run clean && npm run build && npm publish --access public",
+    "clean": "rimraf lib",
+    "republish": "npm run clean && npm run justPublish",
     "justPublish": "npm run build && npm publish --access public"
   },
   "module": "module",
@@ -20,6 +20,7 @@
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
+    "rimraf": "^6.0.1",
     "rollup": "^4.24.0"
   }
 }
